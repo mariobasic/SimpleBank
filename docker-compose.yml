@@ -1,0 +1,15 @@
+services:
+  postgres:
+    image: postgres:alpine
+    container_name: postgres-bank
+    environment:
+      POSTGRES_USER: root
+      POSTGRES_DB: bank
+      POSTGRES_PASSWORD: password
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+volumes:
+  postgres_data:
+    driver: local
