@@ -1,11 +1,28 @@
 package main
 
-//TIP To run your code, right-click the code and select <b>Run</b>. Alternatively, click
-// the <icon src="AllIcons.Actions.Execute"/> icon in the gutter and select the <b>Run</b> menu item from here.
+import (
+	"database/sql"
+	_ "github.com/lib/pq"
+	"github.com/mariobasic/simplebank/api"
+	db "github.com/mariobasic/simplebank/db/sqlc"
+	"github.com/mariobasic/simplebank/util"
+	"log"
+)
 
 func main() {
+	config, err := util.LoadConfig(".")
+	if err != nil {
+		log.Fatal("Error loading config:", err)
+	}
+	conn, err := sql.Open(config.DB.Driver, config.DB.Source)
+	if err != nil {
+		log.Fatal("cannot connect to db", err)
+	}
+
+	server := api.NewServer(db.NewStore(conn))
+	err = server.Start(config.Server.Address)
+	if err != nil {
+		log.Fatal("cannot start server", err)
+	}
 
 }
-
-//TIP See GoLand help at <a href="https://www.jetbrains.com/help/go/">jetbrains.com/help/go/</a>.
-// Also, you can try interactive lessons for GoLand by selecting 'Help | Learn IDE Features' from the main menu.

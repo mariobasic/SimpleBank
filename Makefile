@@ -16,5 +16,12 @@ sqlc:
 test:
 	go test -v -cover ./...
 
-.PHONY: postgres_up postgres_down migrate_up migrate_down sqlc test
+server:
+	go run main.go
+
+mock:
+	mockgen -package mockdb -destination db/mock/store.go github.com/mariobasic/simplebank/db/sqlc Store
+
+
+.PHONY: postgres_up postgres_down migrate_up migrate_down sqlc test server mock
 
