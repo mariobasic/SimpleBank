@@ -24,4 +24,5 @@ type Querier interface {
 	UpdateAccount(ctx context.Context, arg UpdateAccountParams) (Account, error)
 }
 
+// what does this do?
 var _ Querier = (*Queries)(nil)

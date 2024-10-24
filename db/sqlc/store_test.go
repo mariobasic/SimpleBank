@@ -8,7 +8,7 @@ import (
 )
 
 func TestStore_TransferTx(t *testing.T) {
-	store := &SQLStore{New(testDB), testDB}
+	store := NewStore(testDB)
 
 	account1 := createRandomAccount(t)[0]
 	account2 := createRandomAccount(t)[0]
@@ -108,7 +108,7 @@ func TestStore_TransferTx(t *testing.T) {
 }
 
 func TestStore_TransferTxDeadlock(t *testing.T) {
-	store := &SQLStore{New(testDB), testDB}
+	store := NewStore(testDB)
 
 	account1 := createRandomAccount(t)[0]
 	account2 := createRandomAccount(t)[0]
