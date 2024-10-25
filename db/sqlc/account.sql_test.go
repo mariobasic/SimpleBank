@@ -10,6 +10,7 @@ import (
 )
 
 func createRandomAccount(t *testing.T) []Account {
+	user := createRandomUser(t)
 	var accounts []Account
 	tests := []struct {
 		name    string
@@ -17,7 +18,7 @@ func createRandomAccount(t *testing.T) []Account {
 		arg     CreateAccountParams
 		wantErr bool
 	}{
-		{"first", testQueries, CreateAccountParams{Owner: util.RandomOwner(), Balance: util.RandomMoney(), Currency: util.RandomCurrency()}, false},
+		{"first", testQueries, CreateAccountParams{Owner: user[0].Username, Balance: util.RandomMoney(), Currency: util.RandomCurrency()}, false},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {

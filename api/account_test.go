@@ -92,7 +92,7 @@ func TestServer_getAccount(t *testing.T) {
 			recorder := httptest.NewRecorder()
 
 			url := fmt.Sprintf("/accounts/%d", tt.accountID)
-			request, err := http.NewRequest("GET", url, nil)
+			request, err := http.NewRequest(http.MethodGet, url, nil)
 			require.NoError(t, err)
 
 			server.router.ServeHTTP(recorder, request)
@@ -110,12 +110,13 @@ func randomAccount() db.Account {
 	}
 }
 
-func requireBodyMatch(t *testing.T, body *bytes.Buffer, want db.Account) {
+func requireBodyMatch[T any](t *testing.T, body *bytes.Buffer, want T) {
 	data, err := io.ReadAll(body)
 	require.NoError(t, err)
 
-	var got db.Account
-	err = json.Unmarshal(data, &got)
+	got := new(T)
+	err = json.Unmarshal(data, got)
+
 	require.NoError(t, err)
-	require.Equal(t, want, got)
+	require.Equal(t, want, *got)
 }
