@@ -117,9 +117,10 @@ func TestQueries_DeleteAccount(t *testing.T) {
 }
 
 func TestQueries_ListAccounts(t *testing.T) {
+	var lastAccount Account
 
 	for range 10 {
-		createRandomAccount(t)
+		lastAccount = createRandomAccount(t)[0]
 	}
 
 	tests := []struct {
@@ -129,16 +130,23 @@ func TestQueries_ListAccounts(t *testing.T) {
 		want    int
 		wantErr bool
 	}{
-		{"ListAccounts", testQueries, ListAccountsParams{Limit: 5, Offset: 5}, 5, false},
+		{
+			"ListAccounts",
+			testQueries,
+			ListAccountsParams{Owner: lastAccount.Owner, Limit: 5, Offset: 0},
+			5,
+			false,
+		},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 
 			got, err := tt.db.ListAccounts(context.Background(), tt.arg)
 			require.NoError(t, err)
-			require.Len(t, got, tt.want)
+			require.NotEmpty(t, got)
 			for _, account := range got {
 				require.NotEmpty(t, account)
+				require.Equal(t, lastAccount.Owner, account.Owner)
 			}
 		})
 	}

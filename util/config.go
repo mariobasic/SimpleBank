@@ -3,6 +3,7 @@ package util
 import (
 	"github.com/spf13/viper"
 	"strings"
+	"time"
 )
 
 type Config struct {
@@ -13,6 +14,10 @@ type Config struct {
 	Server struct {
 		Address string `mapstructure:"address"`
 	} `mapstructure:"server"`
+	Token struct {
+		SymmetricKey   string        `mapstructure:"symmetric_key"`
+		AccessDuration time.Duration `mapstructure:"access_duration"`
+	} `mapstructure:"token"`
 }
 
 func LoadConfig(path string) (config Config, err error) {
