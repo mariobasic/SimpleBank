@@ -15,8 +15,9 @@ type Config struct {
 		Address string `mapstructure:"address"`
 	} `mapstructure:"server"`
 	Token struct {
-		SymmetricKey   string        `mapstructure:"symmetric_key"`
-		AccessDuration time.Duration `mapstructure:"access_duration"`
+		SymmetricKey    string        `mapstructure:"symmetric_key"`
+		AccessDuration  time.Duration `mapstructure:"access_duration"`
+		RefreshDuration time.Duration `mapstructure:"refresh_duration"`
 	} `mapstructure:"token"`
 }
 

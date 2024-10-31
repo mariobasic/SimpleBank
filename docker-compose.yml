@@ -17,6 +17,7 @@ services:
       - postgres_data:/var/lib/postgresql/data
 
   api:
+    profiles: [app]
     build:
       context: .
       dockerfile: Dockerfile

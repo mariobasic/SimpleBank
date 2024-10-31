@@ -11,9 +11,10 @@ import (
 
 func NewTestServer(_ *testing.T, store db.Store) *Server {
 	config := util.Config{Token: struct {
-		SymmetricKey   string        `mapstructure:"symmetric_key"`
-		AccessDuration time.Duration `mapstructure:"access_duration"`
-	}{SymmetricKey: util.RandomString(32), AccessDuration: time.Minute}}
+		SymmetricKey    string        `mapstructure:"symmetric_key"`
+		AccessDuration  time.Duration `mapstructure:"access_duration"`
+		RefreshDuration time.Duration `mapstructure:"refresh_duration"`
+	}{SymmetricKey: util.RandomString(32), AccessDuration: time.Minute, RefreshDuration: time.Hour}}
 
 	return NewServer(config, store)
 }

@@ -192,6 +192,121 @@ func TestServer_createUser(t *testing.T) {
 	}
 }
 
+func TestServer_loginUser(t *testing.T) {
+	user, password := randomUser(t)
+
+	tests := []struct {
+		name           string
+		body           gin.H
+		buildStubs     func(store *mockdb.MockStore)
+		checkResponses func(*testing.T, *httptest.ResponseRecorder)
+	}{
+		{
+			name: "OK",
+			body: gin.H{
+				"username": user.Username,
+				"password": password,
+			},
+			buildStubs: func(store *mockdb.MockStore) {
+				store.EXPECT().
+					GetUser(gomock.Any(), user.Username).
+					Times(1).
+					Return(user, nil)
+				store.EXPECT().
+					CreateSession(gomock.Any(), gomock.Any()).
+					Times(1)
+			},
+			checkResponses: func(t *testing.T, r *httptest.ResponseRecorder) {
+				require.Equal(t, http.StatusOK, r.Code)
+			},
+		},
+		{
+			name: "UserNotFound",
+			body: gin.H{
+				"username": "NotFound",
+				"password": password,
+			},
+			buildStubs: func(store *mockdb.MockStore) {
+				store.EXPECT().
+					GetUser(gomock.Any(), gomock.Any()).
+					Times(1).
+					Return(db.User{}, sql.ErrNoRows)
+			},
+			checkResponses: func(t *testing.T, r *httptest.ResponseRecorder) {
+				require.Equal(t, http.StatusNotFound, r.Code)
+			},
+		},
+		{
+			name: "IncorrectPassword",
+			body: gin.H{
+				"username": user.Username,
+				"password": "incorrect",
+			},
+			buildStubs: func(store *mockdb.MockStore) {
+				store.EXPECT().
+					GetUser(gomock.Any(), user.Username).
+					Times(1).
+					Return(user, nil)
+			},
+			checkResponses: func(t *testing.T, r *httptest.ResponseRecorder) {
+				require.Equal(t, http.StatusUnauthorized, r.Code)
+			},
+		},
+		{
+			name: "InternalError",
+			body: gin.H{
+				"username": user.Username,
+				"password": password,
+			},
+			buildStubs: func(store *mockdb.MockStore) {
+				store.EXPECT().
+					GetUser(gomock.Any(), user.Username).
+					Times(1).
+					Return(db.User{}, sql.ErrConnDone)
+			},
+			checkResponses: func(t *testing.T, r *httptest.ResponseRecorder) {
+				require.Equal(t, http.StatusInternalServerError, r.Code)
+			},
+		},
+		{
+			name: "InvalidUsername",
+			body: gin.H{
+				"username": "invalid-user#1",
+				"password": password,
+			},
+			buildStubs: func(store *mockdb.MockStore) {
+				store.EXPECT().
+					GetUser(gomock.Any(), gomock.Any()).
+					Times(0)
+			},
+			checkResponses: func(t *testing.T, r *httptest.ResponseRecorder) {
+				require.Equal(t, http.StatusBadRequest, r.Code)
+			},
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			ctrl := gomock.NewController(t)
+			defer ctrl.Finish()
+
+			store := mockdb.NewMockStore(ctrl)
+			tt.buildStubs(store)
+
+			server := NewTestServer(t, store)
+			recorder := httptest.NewRecorder()
+
+			marshal, err := json.Marshal(tt.body)
+			require.NoError(t, err)
+
+			request, err := http.NewRequest(http.MethodPost, "/users/login", bytes.NewReader(marshal))
+			require.NoError(t, err)
+
+			server.router.ServeHTTP(recorder, request)
+			tt.checkResponses(t, recorder)
+		})
+	}
+}
+
 func randomUser(t *testing.T) (db.User, string) {
 	password := util.RandomString(6)
 	hashedPassword, err := util.HashPassword(password)
