@@ -12,7 +12,8 @@ type Config struct {
 		Source string `mapstructure:"source"`
 	} `mapstructure:"db"`
 	Server struct {
-		Address string `mapstructure:"address"`
+		Http string `mapstructure:"http_address"`
+		Grpc string `mapstructure:"grpc_address"`
 	} `mapstructure:"server"`
 	Token struct {
 		SymmetricKey    string        `mapstructure:"symmetric_key"`
