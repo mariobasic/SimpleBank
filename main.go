@@ -3,6 +3,11 @@ package main
 import (
 	"context"
 	"database/sql"
+	"errors"
+	"github.com/golang-migrate/migrate/v4"
+	_ "github.com/golang-migrate/migrate/v4/database/postgres"
+
+	_ "github.com/golang-migrate/migrate/v4/source/file"
 	"github.com/grpc-ecosystem/grpc-gateway/v2/runtime"
 	_ "github.com/lib/pq"
 	"github.com/mariobasic/simplebank/api"
@@ -29,6 +34,8 @@ func main() {
 	if err != nil {
 		log.Fatal("cannot connect to db", err)
 	}
+
+	runDBMigration(config.DB.MigrationURL, config.DB.Source)
 
 	store := db.NewStore(conn)
 	//runGinServer(config, store) // left to show example of standalone gin server
@@ -100,4 +107,17 @@ func runGinServer(config util.Config, store db.Store) {
 	if err != nil {
 		log.Fatal("cannot start server", err)
 	}
+}
+
+func runDBMigration(migrationURL, dbSource string) {
+	migration, err := migrate.New(migrationURL, dbSource)
+	if err != nil {
+		log.Fatalf("cannot create new migration instance: %s", err)
+	}
+
+	if err = migration.Up(); err != nil && !errors.Is(err, migrate.ErrNoChange) {
+		log.Fatalf("failed to run migrate up: %s", err)
+	}
+
+	log.Println("migrate up successfully")
 }

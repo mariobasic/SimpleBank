@@ -1,6 +1,7 @@
 db:
   driver: postgres
   source: postgresql://root:password@localhost:5432/bank?sslmode=disable
+  migration_url: file://db/migration
 server:
   http_address: 0.0.0.0:8080
   grpc_address: 0.0.0.0:9090
