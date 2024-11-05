@@ -7,9 +7,11 @@ import (
 	_ "github.com/lib/pq"
 	"github.com/mariobasic/simplebank/api"
 	db "github.com/mariobasic/simplebank/db/sqlc"
+	_ "github.com/mariobasic/simplebank/doc/statik"
 	"github.com/mariobasic/simplebank/gapi"
 	"github.com/mariobasic/simplebank/pb"
 	"github.com/mariobasic/simplebank/util"
+	"github.com/rakyll/statik/fs"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/reflection"
 	"google.golang.org/protobuf/encoding/protojson"
@@ -72,9 +74,14 @@ func runGatewayServer(config util.Config, store db.Store) {
 		log.Fatal("cannot register gateway server handler:", err)
 	}
 
+	swagFs, err := fs.New()
+	if err != nil {
+		log.Fatalf("cannot create statik fs: %s", err)
+	}
+
 	mux := http.NewServeMux()
 	mux.Handle("/", grpcMux)
-	mux.Handle("/swagger-ui/", http.StripPrefix("/swagger-ui/", http.FileServer(http.Dir("./doc/swagger"))))
+	mux.Handle("/swagger-ui/", http.StripPrefix("/swagger-ui/", http.FileServer(swagFs)))
 
 	listen, err := net.Listen("tcp", config.Server.Http)
 	if err != nil {
