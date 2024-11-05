@@ -74,6 +74,7 @@ func runGatewayServer(config util.Config, store db.Store) {
 
 	mux := http.NewServeMux()
 	mux.Handle("/", grpcMux)
+	mux.Handle("/swagger-ui/", http.StripPrefix("/swagger-ui/", http.FileServer(http.Dir("./doc/swagger"))))
 
 	listen, err := net.Listen("tcp", config.Server.Http)
 	if err != nil {
