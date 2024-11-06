@@ -101,6 +101,7 @@ func runGatewayServer(config util.Config, store db.Store) {
 	}
 }
 
+//goland:noinspection GoUnusedFunction
 func runGinServer(config util.Config, store db.Store) {
 	server := api.NewServer(config, store)
 	err := server.Start(config.Server.Http)

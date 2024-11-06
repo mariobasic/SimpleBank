@@ -2,48 +2,36 @@ package db
 
 import (
 	"context"
+	"database/sql"
 	"github.com/mariobasic/simplebank/util"
 	"github.com/stretchr/testify/require"
 	"testing"
 	"time"
 )
 
-func createRandomUser(t *testing.T) []User {
-	var users []User
-	tests := []struct {
-		name    string
-		db      *Queries
-		arg     func() CreateUserParams
-		wantErr bool
-	}{
-		{"first", testQueries, func() CreateUserParams {
-			password, err := util.HashPassword(util.RandomString(6))
-			require.NoError(t, err)
-			return CreateUserParams{
-				Username:       util.RandomOwner(),
-				HashedPassword: password,
-				FullName:       util.RandomOwner(),
-				Email:          util.RandomEmail()}
-		}, false},
+func createRandomUser(t *testing.T) User {
+	password, err := util.HashPassword(util.RandomString(6))
+	require.NoError(t, err)
+	createUserParam := CreateUserParams{
+		Username:       util.RandomOwner(),
+		HashedPassword: password,
+		FullName:       util.RandomOwner(),
+		Email:          util.RandomEmail(),
 	}
-	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
-			createUserParam := tt.arg()
-			user, err := tt.db.CreateUser(context.Background(), createUserParam)
-			require.NoError(t, err)
-			require.NotEmpty(t, user)
 
-			require.Equal(t, createUserParam.Username, user.Username)
-			require.Equal(t, createUserParam.HashedPassword, user.HashedPassword)
-			require.Equal(t, createUserParam.FullName, user.FullName)
-			require.Equal(t, createUserParam.Email, user.Email)
+	user, err := testQueries.CreateUser(context.Background(), createUserParam)
+	require.NoError(t, err)
+	require.NotEmpty(t, user)
 
-			require.True(t, user.PasswordChangedAt.IsZero())
-			require.NotZero(t, user.CreatedAt)
-			users = append(users, user)
-		})
-	}
-	return users
+	require.Equal(t, createUserParam.Username, user.Username)
+	require.Equal(t, createUserParam.HashedPassword, user.HashedPassword)
+	require.Equal(t, createUserParam.FullName, user.FullName)
+	require.Equal(t, createUserParam.Email, user.Email)
+
+	require.True(t, user.PasswordChangedAt.IsZero())
+	require.NotZero(t, user.CreatedAt)
+
+	return user
 }
 
 func TestQueries_CreateUser(t *testing.T) {
@@ -57,7 +45,7 @@ func TestQueries_GetUser(t *testing.T) {
 		arg     User
 		wantErr bool
 	}{
-		{name: "first", db: testQueries, arg: createRandomUser(t)[0], wantErr: false},
+		{name: "first", db: testQueries, arg: createRandomUser(t), wantErr: false},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
@@ -72,6 +60,111 @@ func TestQueries_GetUser(t *testing.T) {
 			require.Equal(t, tt.arg.Email, got.Email)
 			require.WithinDuration(t, tt.arg.CreatedAt, got.CreatedAt, time.Second)
 			require.WithinDuration(t, tt.arg.PasswordChangedAt, got.PasswordChangedAt, time.Second)
+		})
+	}
+}
+
+func TestQueries_UpdateUser(t *testing.T) {
+	tests := []struct {
+		name        string
+		db          *Queries
+		arg         User
+		update      func(u User) UpdateUserParams
+		updateCheck func(old User, got User, p UpdateUserParams)
+		wantErr     bool
+	}{
+		{
+			name: "first",
+			db:   testQueries,
+			arg:  createRandomUser(t),
+			update: func(u User) UpdateUserParams {
+				return UpdateUserParams{
+					Username: u.Username,
+					FullName: sql.NullString{String: util.RandomOwner(), Valid: true}}
+			},
+			updateCheck: func(old User, got User, up UpdateUserParams) {
+				require.Equal(t, old.Username, got.Username)
+				require.Equal(t, up.FullName.String, got.FullName)
+				require.Equal(t, old.Email, got.Email)
+			},
+			wantErr: false,
+		},
+		{
+			name: "Only Email Update",
+			db:   testQueries,
+			arg:  createRandomUser(t),
+			update: func(u User) UpdateUserParams {
+				return UpdateUserParams{
+					Username: u.Username,
+					Email:    sql.NullString{String: util.RandomEmail(), Valid: true},
+				}
+			},
+			updateCheck: func(old User, got User, up UpdateUserParams) {
+				require.Equal(t, old.Username, got.Username)
+				require.Equal(t, old.FullName, got.FullName)
+				require.Equal(t, up.Email.String, got.Email)
+			},
+			wantErr: false,
+		},
+		{
+			name: "Only Password",
+			db:   testQueries,
+			arg:  createRandomUser(t),
+			update: func(u User) UpdateUserParams {
+				password, err := util.HashPassword(util.RandomString(6))
+				require.NoError(t, err)
+
+				return UpdateUserParams{
+					Username:       u.Username,
+					HashedPassword: sql.NullString{String: password, Valid: true},
+				}
+			},
+			updateCheck: func(old User, got User, up UpdateUserParams) {
+				require.Equal(t, old.Username, got.Username)
+				require.Equal(t, old.FullName, got.FullName)
+				require.Equal(t, old.Email, got.Email)
+				require.Equal(t, up.HashedPassword.String, got.HashedPassword)
+			},
+			wantErr: false,
+		},
+		{
+			name: "All fields",
+			db:   testQueries,
+			arg:  createRandomUser(t),
+			update: func(u User) UpdateUserParams {
+				password, err := util.HashPassword(util.RandomString(6))
+				require.NoError(t, err)
+
+				return UpdateUserParams{
+					Username:       u.Username,
+					FullName:       sql.NullString{String: util.RandomOwner(), Valid: true},
+					Email:          sql.NullString{String: util.RandomEmail(), Valid: true},
+					HashedPassword: sql.NullString{String: password, Valid: true},
+				}
+			},
+			updateCheck: func(old User, got User, up UpdateUserParams) {
+				require.Equal(t, old.Username, got.Username)
+				require.Equal(t, up.FullName.String, got.FullName)
+				require.Equal(t, up.Email.String, got.Email)
+				require.Equal(t, up.HashedPassword.String, got.HashedPassword)
+			},
+			wantErr: false,
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			updateUserParams := tt.update(tt.arg)
+
+			got, err := tt.db.UpdateUser(context.Background(), updateUserParams)
+
+			require.NoError(t, err)
+			require.NotEmpty(t, got)
+
+			tt.updateCheck(tt.arg, got, updateUserParams)
+
+			require.WithinDuration(t, tt.arg.CreatedAt, got.CreatedAt, time.Second)
+			require.WithinDuration(t, tt.arg.PasswordChangedAt, got.PasswordChangedAt, time.Second)
+
 		})
 	}
 }
