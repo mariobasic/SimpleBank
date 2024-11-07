@@ -1,3 +1,4 @@
+env: dev
 db:
   driver: postgres
   source: postgresql://root:password@localhost:5432/bank?sslmode=disable
