@@ -2,7 +2,7 @@
   "swagger": "2.0",
   "info": {
     "title": "Simple Bank API",
-    "version": "1.1",
+    "version": "1.2",
     "contact": {
       "name": "gRPC-Gateway project",
       "url": "https://github.com/grpc-ecosystem/grpc-gateway",
@@ -24,7 +24,7 @@
     "/v1/users": {
       "post": {
         "summary": "Create a new user",
-        "description": "User this API to create a new user",
+        "description": "Use this API to create a new user",
         "operationId": "SimpleBank_CreateUser",
         "responses": {
           "200": {
@@ -53,12 +53,44 @@
         "tags": [
           "SimpleBank"
         ]
+      },
+      "patch": {
+        "summary": "Update user",
+        "description": "Use this API to update user",
+        "operationId": "SimpleBank_UpdateUser",
+        "responses": {
+          "200": {
+            "description": "A successful response.",
+            "schema": {
+              "$ref": "#/definitions/pbUpdateUserResponse"
+            }
+          },
+          "default": {
+            "description": "An unexpected error response.",
+            "schema": {
+              "$ref": "#/definitions/rpcStatus"
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "body",
+            "in": "body",
+            "required": true,
+            "schema": {
+              "$ref": "#/definitions/pbUpdateUserRequest"
+            }
+          }
+        ],
+        "tags": [
+          "SimpleBank"
+        ]
       }
     },
     "/v1/users/login": {
       "post": {
         "summary": "Login user",
-        "description": "User this API to login user and get access token \u0026 refresh token",
+        "description": "Use this API to login user and get access token \u0026 refresh token",
         "operationId": "SimpleBank_LoginUser",
         "responses": {
           "200": {
@@ -149,6 +181,31 @@
         "refresh_token_expires_at": {
           "type": "string",
           "format": "date-time"
+        }
+      }
+    },
+    "pbUpdateUserRequest": {
+      "type": "object",
+      "properties": {
+        "username": {
+          "type": "string"
+        },
+        "full_name": {
+          "type": "string"
+        },
+        "email": {
+          "type": "string"
+        },
+        "password": {
+          "type": "string"
+        }
+      }
+    },
+    "pbUpdateUserResponse": {
+      "type": "object",
+      "properties": {
+        "user": {
+          "$ref": "#/definitions/pbUser"
         }
       }
     },

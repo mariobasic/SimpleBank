@@ -11,7 +11,7 @@ message CreateUserRequest {
   string username = 1;
   string full_name = 2 [json_name = "full_name"];
   string email = 3;
-  string password = 5;
+  string password = 4;
 }
 
 message CreateUserResponse {
