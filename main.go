@@ -8,6 +8,7 @@ import (
 	_ "github.com/golang-migrate/migrate/v4/database/postgres"
 	_ "github.com/golang-migrate/migrate/v4/source/file"
 	"github.com/grpc-ecosystem/grpc-gateway/v2/runtime"
+	"github.com/hibiken/asynq"
 	_ "github.com/lib/pq"
 	"github.com/mariobasic/simplebank/api"
 	db "github.com/mariobasic/simplebank/db/sqlc"
@@ -15,6 +16,7 @@ import (
 	"github.com/mariobasic/simplebank/gapi"
 	"github.com/mariobasic/simplebank/pb"
 	"github.com/mariobasic/simplebank/util"
+	"github.com/mariobasic/simplebank/worker"
 	"github.com/rakyll/statik/fs"
 	"github.com/rs/zerolog"
 	"github.com/rs/zerolog/log"
@@ -44,13 +46,18 @@ func main() {
 	runDBMigration(config.DB.MigrationURL, config.DB.Source)
 
 	store := db.NewStore(conn)
+
+	redisOpt := asynq.RedisClientOpt{Addr: config.Server.Redis}
+	taskDistributor := worker.NewRedisTaskDistributor(redisOpt)
+
 	//runGinServer(config, store) // left to show example of standalone gin server
-	go runGatewayServer(config, store)
-	runGrpcServer(config, store)
+	go runTaskProcessor(redisOpt, store)
+	go runGatewayServer(config, store, taskDistributor)
+	runGrpcServer(config, store, taskDistributor)
 }
 
-func runGrpcServer(config util.Config, store db.Store) {
-	server := gapi.NewServer(config, store)
+func runGrpcServer(config util.Config, store db.Store, taskDistributor worker.TaskDistributor) {
+	server := gapi.NewServer(config, store, taskDistributor)
 
 	grpcLogger := grpc.UnaryInterceptor(gapi.GrpcLogger)
 	grpcServer := grpc.NewServer(grpcLogger)
@@ -70,8 +77,8 @@ func runGrpcServer(config util.Config, store db.Store) {
 	}
 }
 
-func runGatewayServer(config util.Config, store db.Store) {
-	server := gapi.NewServer(config, store)
+func runGatewayServer(config util.Config, store db.Store, taskDistributor worker.TaskDistributor) {
+	server := gapi.NewServer(config, store, taskDistributor)
 
 	grpcMux := runtime.NewServeMux(
 		runtime.WithMarshalerOption(runtime.MIMEWildcard, &runtime.JSONPb{
@@ -131,4 +138,13 @@ func runDBMigration(migrationURL, dbSource string) {
 	}
 
 	log.Info().Msg("migrate up successfully")
+}
+
+func runTaskProcessor(redisOpt asynq.RedisClientOpt, store db.Store) {
+	taskProcessor := worker.NewRedisTaskProcessor(redisOpt, store)
+	log.Info().Msg("start task processor")
+	err := taskProcessor.Start()
+	if err != nil {
+		log.Fatal().Err(err).Msg("task processor failed to start")
+	}
 }

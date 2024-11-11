@@ -3,14 +3,17 @@ package gapi
 import (
 	"context"
 	"errors"
+	"github.com/hibiken/asynq"
 	"github.com/lib/pq"
 	db "github.com/mariobasic/simplebank/db/sqlc"
 	"github.com/mariobasic/simplebank/pb"
 	"github.com/mariobasic/simplebank/util"
 	"github.com/mariobasic/simplebank/val"
+	"github.com/mariobasic/simplebank/worker"
 	"google.golang.org/genproto/googleapis/rpc/errdetails"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
+	"time"
 )
 
 func (s *Server) CreateUser(ctx context.Context, req *pb.CreateUserRequest) (*pb.CreateUserResponse, error) {
@@ -23,14 +26,26 @@ func (s *Server) CreateUser(ctx context.Context, req *pb.CreateUserRequest) (*pb
 		return nil, status.Error(codes.Internal, err.Error())
 	}
 
-	arg := db.CreateUserParams{
-		Username:       req.GetUsername(),
-		FullName:       req.GetFullName(),
-		Email:          req.GetEmail(),
-		HashedPassword: hp,
+	arg := db.CreateUserTxParams{
+		CreateUserParams: db.CreateUserParams{
+			Username:       req.GetUsername(),
+			FullName:       req.GetFullName(),
+			Email:          req.GetEmail(),
+			HashedPassword: hp,
+		},
+		AfterCreate: func(user db.User) error {
+			taskPayload := &worker.PayloadSendVerifyEmail{Username: user.Username}
+			opts := []asynq.Option{
+				asynq.MaxRetry(10),
+				asynq.ProcessIn(10 * time.Second),
+				asynq.Queue(worker.QueueCritical),
+			}
+
+			return s.taskDistributor.DistributeTaskSendVerifyEmail(ctx, taskPayload, opts...)
+		},
 	}
 
-	user, err := s.store.CreateUser(ctx, arg)
+	txResult, err := s.store.CreateUserTx(ctx, arg)
 	if err != nil {
 		var pqErr *pq.Error
 		if errors.As(err, &pqErr) {
@@ -42,7 +57,7 @@ func (s *Server) CreateUser(ctx context.Context, req *pb.CreateUserRequest) (*pb
 		return nil, status.Errorf(codes.Internal, "failed to create user: %s", err)
 	}
 
-	return &pb.CreateUserResponse{User: convertUser(user)}, nil
+	return &pb.CreateUserResponse{User: convertUser(txResult.User)}, nil
 }
 
 func validateCreateUserRequest(req *pb.CreateUserRequest) (violations []*errdetails.BadRequest_FieldViolation) {

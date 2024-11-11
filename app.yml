@@ -6,6 +6,7 @@ db:
 server:
   http_address: 0.0.0.0:8080
   grpc_address: 0.0.0.0:9090
+  redis_address: 0.0.0.0:6379
 token:
   symmetric_key: 12345678901234567890123456789012
   access_duration: 15m

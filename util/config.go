@@ -14,8 +14,9 @@ type Config struct {
 		MigrationURL string `mapstructure:"migration_url"`
 	} `mapstructure:"db"`
 	Server struct {
-		Http string `mapstructure:"http_address"`
-		Grpc string `mapstructure:"grpc_address"`
+		Http  string `mapstructure:"http_address"`
+		Grpc  string `mapstructure:"grpc_address"`
+		Redis string `mapstructure:"redis_address"`
 	} `mapstructure:"server"`
 	Token struct {
 		SymmetricKey    string        `mapstructure:"symmetric_key"`
