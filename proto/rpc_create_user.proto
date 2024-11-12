@@ -6,7 +6,6 @@ import "user.proto";
 
 option go_package = "github.com/mariobasic/simplebank/pb";
 
-
 message CreateUserRequest {
   string username = 1;
   string full_name = 2 [json_name = "full_name"];

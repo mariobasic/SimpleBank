@@ -14,6 +14,7 @@ import (
 	db "github.com/mariobasic/simplebank/db/sqlc"
 	_ "github.com/mariobasic/simplebank/doc/statik"
 	"github.com/mariobasic/simplebank/gapi"
+	"github.com/mariobasic/simplebank/mail"
 	"github.com/mariobasic/simplebank/pb"
 	"github.com/mariobasic/simplebank/util"
 	"github.com/mariobasic/simplebank/worker"
@@ -51,7 +52,7 @@ func main() {
 	taskDistributor := worker.NewRedisTaskDistributor(redisOpt)
 
 	//runGinServer(config, store) // left to show example of standalone gin server
-	go runTaskProcessor(redisOpt, store)
+	go runTaskProcessor(redisOpt, store, config)
 	go runGatewayServer(config, store, taskDistributor)
 	runGrpcServer(config, store, taskDistributor)
 }
@@ -140,8 +141,9 @@ func runDBMigration(migrationURL, dbSource string) {
 	log.Info().Msg("migrate up successfully")
 }
 
-func runTaskProcessor(redisOpt asynq.RedisClientOpt, store db.Store) {
-	taskProcessor := worker.NewRedisTaskProcessor(redisOpt, store)
+func runTaskProcessor(redisOpt asynq.RedisClientOpt, store db.Store, config util.Config) {
+	sender := mail.NewGmailSender(config.Email.Sender.Name, config.Email.Sender.Address, config.Email.Sender.Password)
+	taskProcessor := worker.NewRedisTaskProcessor(redisOpt, store, sender)
 	log.Info().Msg("start task processor")
 	err := taskProcessor.Start()
 	if err != nil {

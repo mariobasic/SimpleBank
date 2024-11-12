@@ -19,9 +19,9 @@ INSERT INTO sessions (id,
                       user_agent,
                       client_ip,
                       is_blocked,
-                      expires_at)
+                      expired_at)
 VALUES ($1, $2, $3, $4, $5, $6, $7)
-RETURNING id, username, refresh_token, user_agent, client_ip, is_blocked, expires_at, created_at
+RETURNING id, username, refresh_token, user_agent, client_ip, is_blocked, expired_at, created_at
 `
 
 type CreateSessionParams struct {
@@ -31,7 +31,7 @@ type CreateSessionParams struct {
 	UserAgent    string    `json:"user_agent"`
 	ClientIp     string    `json:"client_ip"`
 	IsBlocked    bool      `json:"is_blocked"`
-	ExpiresAt    time.Time `json:"expires_at"`
+	ExpiredAt    time.Time `json:"expired_at"`
 }
 
 func (q *Queries) CreateSession(ctx context.Context, arg CreateSessionParams) (Session, error) {
@@ -42,7 +42,7 @@ func (q *Queries) CreateSession(ctx context.Context, arg CreateSessionParams) (S
 		arg.UserAgent,
 		arg.ClientIp,
 		arg.IsBlocked,
-		arg.ExpiresAt,
+		arg.ExpiredAt,
 	)
 	var i Session
 	err := row.Scan(
@@ -52,14 +52,14 @@ func (q *Queries) CreateSession(ctx context.Context, arg CreateSessionParams) (S
 		&i.UserAgent,
 		&i.ClientIp,
 		&i.IsBlocked,
-		&i.ExpiresAt,
+		&i.ExpiredAt,
 		&i.CreatedAt,
 	)
 	return i, err
 }
 
 const getSession = `-- name: GetSession :one
-SELECT id, username, refresh_token, user_agent, client_ip, is_blocked, expires_at, created_at FROM sessions
+SELECT id, username, refresh_token, user_agent, client_ip, is_blocked, expired_at, created_at FROM sessions
 WHERE id = $1 LIMIT 1
 `
 
@@ -73,7 +73,7 @@ func (q *Queries) GetSession(ctx context.Context, id uuid.UUID) (Session, error)
 		&i.UserAgent,
 		&i.ClientIp,
 		&i.IsBlocked,
-		&i.ExpiresAt,
+		&i.ExpiredAt,
 		&i.CreatedAt,
 	)
 	return i, err

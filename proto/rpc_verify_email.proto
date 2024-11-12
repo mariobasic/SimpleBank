@@ -1,0 +1,14 @@
+syntax = "proto3";
+
+package pb;
+
+option go_package = "github.com/mariobasic/simplebank/pb";
+
+message VerifyEmailRequest {
+  int64 email_id = 1 [json_name = "email_id"];
+  string secret_code = 2 [json_name = "secret_code"];
+}
+
+message VerifyEmailResponse {
+  bool is_verified = 1 [json_name = "is_verified"];
+}

@@ -5,6 +5,8 @@ import (
 	"encoding/json"
 	"fmt"
 	"github.com/hibiken/asynq"
+	db "github.com/mariobasic/simplebank/db/sqlc"
+	"github.com/mariobasic/simplebank/util"
 	"github.com/rs/zerolog/log"
 )
 
@@ -51,7 +53,20 @@ func (r *RedisTaskProcessor) ProcessTaskSendVerifyEmail(ctx context.Context, tas
 		//}
 		return fmt.Errorf("cannot get user %s: %w", payload.Username, err)
 	}
-	// TODO: send email to user
+
+	verifyEmail, err := r.store.CreateVerifyEmail(ctx, db.CreateVerifyEmailParams{
+		Username:   user.Username,
+		Email:      user.Email,
+		SecretCode: util.RandomString(32),
+	})
+	if err != nil {
+		return fmt.Errorf("cannot create verify email: %w", err)
+	}
+	err = r.sendEmail(verifyEmail)
+	if err != nil {
+		return fmt.Errorf("cannot send verify email: %w", err)
+	}
+
 	log.Info().
 		Str("task", task.Type()).
 		Bytes("payload", task.Payload()).
@@ -59,4 +74,15 @@ func (r *RedisTaskProcessor) ProcessTaskSendVerifyEmail(ctx context.Context, tas
 		Msg("processed task")
 
 	return nil
+}
+
+func (r *RedisTaskProcessor) sendEmail(verifyEmail db.VerifyEmail) error {
+	subject := "Welcome to Simple Bank"
+	verifyUrl := fmt.Sprintf("http://localhost:8080/v1/verify_email?email_id=%d&secret_code=%s", verifyEmail.ID, verifyEmail.SecretCode)
+	content := fmt.Sprintf(`Hello %s,<br/>
+	Thank you for registering with us!<br/>
+	Please <a href="%s">click here</a> to verify your email address.<br/>`, verifyEmail.Username, verifyUrl)
+	to := []string{verifyEmail.Email}
+
+	return r.mailer.Send(subject, content, to, nil, nil, nil)
 }
