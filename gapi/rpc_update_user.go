@@ -51,7 +51,7 @@ func (s *Server) UpdateUser(ctx context.Context, req *pb.UpdateUserRequest) (*pb
 
 	user, err := s.store.UpdateUser(ctx, arg)
 	if err != nil {
-		if errors.As(err, &sql.ErrNoRows) {
+		if errors.Is(err, sql.ErrNoRows) {
 			return nil, status.Errorf(codes.NotFound, "user not found: %s", err.Error())
 		}
 		return nil, status.Errorf(codes.Internal, "failed to update user: %s", err.Error())

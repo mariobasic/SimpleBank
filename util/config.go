@@ -23,6 +23,13 @@ type Config struct {
 		AccessDuration  time.Duration `mapstructure:"access_duration"`
 		RefreshDuration time.Duration `mapstructure:"refresh_duration"`
 	} `mapstructure:"token"`
+	Email struct {
+		Sender struct {
+			Name     string `mapstructure:"name"`
+			Address  string `mapstructure:"address"`
+			Password string `mapstructure:"password"`
+		} `mapstructure:"sender"`
+	} `mapstructure:"email"`
 }
 
 func LoadConfig(path string) (config Config, err error) {

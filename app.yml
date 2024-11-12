@@ -11,3 +11,8 @@ token:
   symmetric_key: 12345678901234567890123456789012
   access_duration: 15m
   refresh_duration: 24h
+email:
+  sender:
+    name: Simple Bank
+    address: simplebank980@gmail.com
+    password: zliwbrvrwzrbkkgn
