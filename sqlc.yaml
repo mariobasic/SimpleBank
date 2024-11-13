@@ -3,7 +3,6 @@ sql:
     - engine: postgresql
       schema: "./db/migration/"
       queries: "./db/query/"
-#      path: "./db/sqlc"
       gen:
           go:
               package: "db"
@@ -13,7 +12,4 @@ sql:
               emit_empty_slices: true
               emit_exact_table_names: false
               query_parameter_limit: 1
-              sql_package: database/sql #
-#              overrides:
-#                  - column: "authors.id"
-#                    go_type: "your/package.SomeType"
+              sql_package: database/sql
