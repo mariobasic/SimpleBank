@@ -1,6 +1,5 @@
 env: dev
 db:
-  driver: postgres
   source: postgresql://root:password@localhost:5432/bank?sslmode=disable
   migration_url: file://db/migration
 server:

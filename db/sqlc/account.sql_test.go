@@ -2,7 +2,7 @@ package db
 
 import (
 	"context"
-	"database/sql"
+	"github.com/jackc/pgx/v5"
 	"github.com/mariobasic/simplebank/util"
 	"github.com/stretchr/testify/require"
 	"testing"
@@ -14,11 +14,11 @@ func createRandomAccount(t *testing.T) []Account {
 	var accounts []Account
 	tests := []struct {
 		name    string
-		db      *Queries
+		db      Store
 		arg     CreateAccountParams
 		wantErr bool
 	}{
-		{"first", testQueries, CreateAccountParams{Owner: user.Username, Balance: util.RandomMoney(), Currency: util.RandomCurrency()}, false},
+		{"first", testStore, CreateAccountParams{Owner: user.Username, Balance: util.RandomMoney(), Currency: util.RandomCurrency()}, false},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
@@ -46,11 +46,11 @@ func TestQueries_GetAccount(t *testing.T) {
 
 	tests := []struct {
 		name    string
-		db      *Queries
+		db      Store
 		arg     Account
 		wantErr bool
 	}{
-		{"GetAccount1", testQueries, createRandomAccount(t)[0], false},
+		{"GetAccount1", testStore, createRandomAccount(t)[0], false},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
@@ -71,11 +71,11 @@ func TestQueries_UpdateAccount(t *testing.T) {
 	tests := []struct {
 		name    string
 		account Account
-		db      *Queries
+		db      Store
 		arg     UpdateAccountParams
 		wantErr bool
 	}{
-		{"UpdateAccount", account, testQueries, UpdateAccountParams{ID: account.ID, Balance: util.RandomMoney()}, false},
+		{"UpdateAccount", account, testStore, UpdateAccountParams{ID: account.ID, Balance: util.RandomMoney()}, false},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
@@ -96,11 +96,11 @@ func TestQueries_DeleteAccount(t *testing.T) {
 	account := createRandomAccount(t)[0]
 	tests := []struct {
 		name    string
-		db      *Queries
+		db      Store
 		arg     int64
 		wantErr bool
 	}{
-		{"DeleteAccount", testQueries, account.ID, false},
+		{"DeleteAccount", testStore, account.ID, false},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
@@ -110,7 +110,7 @@ func TestQueries_DeleteAccount(t *testing.T) {
 
 			got, err := tt.db.GetAccount(context.Background(), tt.arg)
 			require.Error(t, err)
-			require.EqualError(t, err, sql.ErrNoRows.Error())
+			require.EqualError(t, err, pgx.ErrNoRows.Error())
 			require.Empty(t, got)
 		})
 	}
@@ -125,14 +125,14 @@ func TestQueries_ListAccounts(t *testing.T) {
 
 	tests := []struct {
 		name    string
-		db      *Queries
+		db      Store
 		arg     ListAccountsParams
 		want    int
 		wantErr bool
 	}{
 		{
 			"ListAccounts",
-			testQueries,
+			testStore,
 			ListAccountsParams{Owner: lastAccount.Owner, Limit: 5, Offset: 0},
 			5,
 			false,

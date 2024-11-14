@@ -7,6 +7,7 @@ import (
 	"fmt"
 	"github.com/gin-gonic/gin"
 	"github.com/golang/mock/gomock"
+	"github.com/jackc/pgx/v5"
 	mockdb "github.com/mariobasic/simplebank/db/mock"
 	db "github.com/mariobasic/simplebank/db/sqlc"
 	"github.com/mariobasic/simplebank/token"
@@ -85,7 +86,7 @@ func TestServer_getAccount(t *testing.T) {
 				store.EXPECT().
 					GetAccount(gomock.Any(), gomock.Eq(account.ID)).
 					Times(1).
-					Return(db.Account{}, sql.ErrNoRows)
+					Return(db.Account{}, pgx.ErrNoRows)
 			},
 			checkResponse: func(t *testing.T, resp *httptest.ResponseRecorder) {
 				require.Equal(t, http.StatusNotFound, resp.Code)

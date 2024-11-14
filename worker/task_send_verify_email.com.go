@@ -48,7 +48,7 @@ func (r *RedisTaskProcessor) ProcessTaskSendVerifyEmail(ctx context.Context, tas
 		// if the db traffic is heavy this could be invoked before the user tx is commited
 		// than we will not find the user in time, and we want retry to pick it up
 		// another way to do this is to add async processing delay
-		//if errors.Is(err, sql.ErrNoRows) {
+		//if errors.Is(err, pgx.ErrNoRows) {
 		//	return fmt.Errorf("user %s not found: %w", payload.Username, asynq.SkipRetry)
 		//}
 		return fmt.Errorf("cannot get user %s: %w", payload.Username, err)

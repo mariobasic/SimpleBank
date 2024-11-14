@@ -2,14 +2,13 @@ package main
 
 import (
 	"context"
-	"database/sql"
 	"errors"
 	"github.com/golang-migrate/migrate/v4"
 	_ "github.com/golang-migrate/migrate/v4/database/postgres"
 	_ "github.com/golang-migrate/migrate/v4/source/file"
 	"github.com/grpc-ecosystem/grpc-gateway/v2/runtime"
 	"github.com/hibiken/asynq"
-	_ "github.com/lib/pq"
+	"github.com/jackc/pgx/v5/pgxpool"
 	"github.com/mariobasic/simplebank/api"
 	db "github.com/mariobasic/simplebank/db/sqlc"
 	_ "github.com/mariobasic/simplebank/doc/statik"
@@ -39,14 +38,14 @@ func main() {
 		log.Logger = log.Output(zerolog.ConsoleWriter{Out: os.Stderr})
 	}
 
-	conn, err := sql.Open(config.DB.Driver, config.DB.Source)
+	pool, err := pgxpool.New(context.Background(), config.DB.Source)
 	if err != nil {
 		log.Fatal().Msgf("cannot connect to db: %s", err)
 	}
 
 	runDBMigration(config.DB.MigrationURL, config.DB.Source)
 
-	store := db.NewStore(conn)
+	store := db.NewStore(pool)
 
 	redisOpt := asynq.RedisClientOpt{Addr: config.Server.Redis}
 	taskDistributor := worker.NewRedisTaskDistributor(redisOpt)

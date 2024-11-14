@@ -7,7 +7,7 @@ import (
 	"fmt"
 	"github.com/gin-gonic/gin"
 	"github.com/golang/mock/gomock"
-	"github.com/lib/pq"
+	"github.com/jackc/pgx/v5"
 	mockdb "github.com/mariobasic/simplebank/db/mock"
 	db "github.com/mariobasic/simplebank/db/sqlc"
 	"github.com/mariobasic/simplebank/util"
@@ -110,7 +110,7 @@ func TestServer_createUser(t *testing.T) {
 				store.EXPECT().
 					CreateUser(gomock.Any(), gomock.Any()).
 					Times(1).
-					Return(db.User{}, &pq.Error{Code: "23505"})
+					Return(db.User{}, db.ErrUniqueViolation)
 			},
 			checkResponses: func(t *testing.T, r *httptest.ResponseRecorder) {
 				require.Equal(t, http.StatusForbidden, r.Code)
@@ -230,7 +230,7 @@ func TestServer_loginUser(t *testing.T) {
 				store.EXPECT().
 					GetUser(gomock.Any(), gomock.Any()).
 					Times(1).
-					Return(db.User{}, sql.ErrNoRows)
+					Return(db.User{}, pgx.ErrNoRows)
 			},
 			checkResponses: func(t *testing.T, r *httptest.ResponseRecorder) {
 				require.Equal(t, http.StatusNotFound, r.Code)

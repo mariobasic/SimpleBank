@@ -2,8 +2,9 @@ package gapi
 
 import (
 	"context"
-	"database/sql"
 	"github.com/golang/mock/gomock"
+	"github.com/jackc/pgx/v5"
+	"github.com/jackc/pgx/v5/pgtype"
 	mockdb "github.com/mariobasic/simplebank/db/mock"
 	db "github.com/mariobasic/simplebank/db/sqlc"
 	"github.com/mariobasic/simplebank/pb"
@@ -37,8 +38,8 @@ func TestServer_UpdateUser(t *testing.T) {
 			buildStubs: func(store *mockdb.MockStore) {
 				arg := db.UpdateUserParams{
 					Username: user.Username,
-					FullName: sql.NullString{String: newName, Valid: true},
-					Email:    sql.NullString{String: newEmail, Valid: true},
+					FullName: pgtype.Text{String: newName, Valid: true},
+					Email:    pgtype.Text{String: newEmail, Valid: true},
 				}
 
 				store.EXPECT().
@@ -79,7 +80,7 @@ func TestServer_UpdateUser(t *testing.T) {
 				store.EXPECT().
 					UpdateUser(gomock.Any(), gomock.Any()).
 					Times(1).
-					Return(db.User{}, sql.ErrNoRows)
+					Return(db.User{}, pgx.ErrNoRows)
 
 			},
 			buildContext: func(t *testing.T, tokenMaker token.Maker) context.Context {
@@ -102,7 +103,7 @@ func TestServer_UpdateUser(t *testing.T) {
 				store.EXPECT().
 					UpdateUser(gomock.Any(), gomock.Any()).
 					Times(0).
-					Return(db.User{}, sql.ErrNoRows)
+					Return(db.User{}, pgx.ErrNoRows)
 
 			},
 			buildContext: func(t *testing.T, tokenMaker token.Maker) context.Context {
@@ -125,7 +126,7 @@ func TestServer_UpdateUser(t *testing.T) {
 				store.EXPECT().
 					UpdateUser(gomock.Any(), gomock.Any()).
 					Times(0).
-					Return(db.User{}, sql.ErrNoRows)
+					Return(db.User{}, pgx.ErrNoRows)
 
 			},
 			buildContext: func(t *testing.T, tokenMaker token.Maker) context.Context {
@@ -148,7 +149,7 @@ func TestServer_UpdateUser(t *testing.T) {
 				store.EXPECT().
 					UpdateUser(gomock.Any(), gomock.Any()).
 					Times(0).
-					Return(db.User{}, sql.ErrNoRows)
+					Return(db.User{}, pgx.ErrNoRows)
 
 			},
 			buildContext: func(t *testing.T, tokenMaker token.Maker) context.Context {

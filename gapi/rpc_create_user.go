@@ -2,9 +2,7 @@ package gapi
 
 import (
 	"context"
-	"errors"
 	"github.com/hibiken/asynq"
-	"github.com/lib/pq"
 	db "github.com/mariobasic/simplebank/db/sqlc"
 	"github.com/mariobasic/simplebank/pb"
 	"github.com/mariobasic/simplebank/util"
@@ -47,12 +45,8 @@ func (s *Server) CreateUser(ctx context.Context, req *pb.CreateUserRequest) (*pb
 
 	txResult, err := s.store.CreateUserTx(ctx, arg)
 	if err != nil {
-		var pqErr *pq.Error
-		if errors.As(err, &pqErr) {
-			switch pqErr.Code.Name() {
-			case "unique_violation":
-				return nil, status.Errorf(codes.PermissionDenied, "username already exists: %s", pqErr)
-			}
+		if db.ErrorCode(err) == db.UniqueViolationCode {
+			return nil, status.Errorf(codes.AlreadyExists, " %s", err)
 		}
 		return nil, status.Errorf(codes.Internal, "failed to create user: %s", err)
 	}
