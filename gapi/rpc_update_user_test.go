@@ -57,7 +57,7 @@ func TestServer_UpdateUser(t *testing.T) {
 
 			},
 			buildContext: func(t *testing.T, tokenMaker token.Maker) context.Context {
-				return newContextWithBearerToken(t, tokenMaker, user.Username, time.Minute)
+				return newContextWithBearerToken(t, tokenMaker, user.Username, user.Role, time.Minute)
 			},
 			checkResponses: func(t *testing.T, r *pb.UpdateUserResponse, err error) {
 				require.NoError(t, err)
@@ -84,7 +84,7 @@ func TestServer_UpdateUser(t *testing.T) {
 
 			},
 			buildContext: func(t *testing.T, tokenMaker token.Maker) context.Context {
-				return newContextWithBearerToken(t, tokenMaker, user.Username, time.Minute)
+				return newContextWithBearerToken(t, tokenMaker, user.Username, user.Role, time.Minute)
 			},
 			checkResponses: func(t *testing.T, r *pb.UpdateUserResponse, err error) {
 				require.Error(t, err)
@@ -107,7 +107,7 @@ func TestServer_UpdateUser(t *testing.T) {
 
 			},
 			buildContext: func(t *testing.T, tokenMaker token.Maker) context.Context {
-				return newContextWithBearerToken(t, tokenMaker, user.Username, time.Minute)
+				return newContextWithBearerToken(t, tokenMaker, user.Username, user.Role, time.Minute)
 			},
 			checkResponses: func(t *testing.T, r *pb.UpdateUserResponse, err error) {
 				require.Error(t, err)
@@ -130,7 +130,7 @@ func TestServer_UpdateUser(t *testing.T) {
 
 			},
 			buildContext: func(t *testing.T, tokenMaker token.Maker) context.Context {
-				return newContextWithBearerToken(t, tokenMaker, user.Username, -time.Minute)
+				return newContextWithBearerToken(t, tokenMaker, user.Username, user.Role, -time.Minute)
 			},
 			checkResponses: func(t *testing.T, r *pb.UpdateUserResponse, err error) {
 				require.Error(t, err)

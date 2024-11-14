@@ -31,12 +31,12 @@ func (s *Server) LoginUser(ctx context.Context, req *pb.LoginUserRequest) (*pb.L
 		return nil, status.Errorf(codes.NotFound, "incorrect password: %s", err)
 	}
 
-	token, accessPayload, err := s.tokenMaker.CreateToken(user.Username, s.config.Token.AccessDuration)
+	token, accessPayload, err := s.tokenMaker.CreateToken(user.Username, user.Role, s.config.Token.AccessDuration)
 	if err != nil {
 		return nil, status.Errorf(codes.Internal, "failed to generate access token: %s", err)
 	}
 
-	refreshToken, refreshPayload, err := s.tokenMaker.CreateToken(user.Username, s.config.Token.RefreshDuration)
+	refreshToken, refreshPayload, err := s.tokenMaker.CreateToken(user.Username, user.Role, s.config.Token.RefreshDuration)
 	if err != nil {
 		return nil, status.Errorf(codes.Internal, "failed to generate refresh token: %s", err)
 	}

@@ -104,13 +104,13 @@ func (s *Server) loginUser(ctx *gin.Context) {
 		ctx.JSON(http.StatusUnauthorized, errorResponse(err))
 		return
 	}
-	token, accessPayload, err := s.tokenMaker.CreateToken(user.Username, s.config.Token.AccessDuration)
+	token, accessPayload, err := s.tokenMaker.CreateToken(user.Username, user.Role, s.config.Token.AccessDuration)
 	if err != nil {
 		ctx.JSON(http.StatusInternalServerError, errorResponse(err))
 		return
 	}
 
-	refreshToken, refreshPayload, err := s.tokenMaker.CreateToken(user.Username, s.config.Token.RefreshDuration)
+	refreshToken, refreshPayload, err := s.tokenMaker.CreateToken(user.Username, user.Role, s.config.Token.RefreshDuration)
 	if err != nil {
 		ctx.JSON(http.StatusInternalServerError, errorResponse(err))
 		return
