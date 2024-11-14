@@ -37,8 +37,10 @@ services:
       dockerfile: Dockerfile
     ports:
       - "8080:8080"
+      - "9090:9090"
     environment:
       - DB_SOURCE=postgresql://root:password@postgres:5432/bank?sslmode=disable
+      - SERVER_REDIS_ADDRESS=redis:6379
     depends_on:
       postgres:
         condition: service_healthy
