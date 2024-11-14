@@ -5,6 +5,7 @@ import (
 	"database/sql"
 	"fmt"
 	"github.com/golang/mock/gomock"
+	"github.com/jackc/pgx/v5/pgconn"
 	mockdb "github.com/mariobasic/simplebank/db/mock"
 	db "github.com/mariobasic/simplebank/db/sqlc"
 	"github.com/mariobasic/simplebank/pb"
@@ -136,7 +137,7 @@ func TestServer_CreateUser(t *testing.T) {
 				store.EXPECT().
 					CreateUserTx(gomock.Any(), gomock.Any()).
 					Times(1).
-					Return(db.CreateUserTxResult{}, db.ErrUniqueViolation)
+					Return(db.CreateUserTxResult{}, &pgconn.PgError{Code: db.UniqueViolationCode})
 				tskDist.EXPECT().
 					DistributeTaskSendVerifyEmail(gomock.Any(), gomock.Any(), gomock.Any()).
 					Times(0).
@@ -144,7 +145,7 @@ func TestServer_CreateUser(t *testing.T) {
 			},
 			checkResponses: func(t *testing.T, r *pb.CreateUserResponse, err error) {
 				require.Error(t, err)
-				require.Equal(t, codes.PermissionDenied, status.Code(err))
+				require.Equal(t, codes.AlreadyExists, status.Code(err))
 			},
 		},
 		{
