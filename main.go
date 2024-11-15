@@ -18,6 +18,7 @@ import (
 	"github.com/mariobasic/simplebank/util"
 	"github.com/mariobasic/simplebank/worker"
 	"github.com/rakyll/statik/fs"
+	"github.com/rs/cors"
 	"github.com/rs/zerolog"
 	"github.com/rs/zerolog/log"
 	"golang.org/x/sync/errgroup"
@@ -151,8 +152,11 @@ func runGatewayServer(
 	mux.Handle("/", grpcMux)
 	mux.Handle("/swagger-ui/", http.StripPrefix("/swagger-ui/", http.FileServer(swagFs)))
 
+	c := cors.Default()
+	handler := c.Handler(gapi.HttpLogger(mux))
+
 	httpServer := &http.Server{
-		Handler: gapi.HttpLogger(mux),
+		Handler: handler,
 		Addr:    config.Server.Http,
 	}
 
